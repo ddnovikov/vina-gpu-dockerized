@@ -332,7 +332,10 @@ inline void angle_to_quaternion2(				float*		out,
 									const		float*		axis,
 												float		angle
 ) {
-	if (norm3(axis) - 1 >= 0.001)printf("\nkernel2: angle_to_quaternion() ERROR!"); // Replace assert(eq(axis.norm(), 1));
+	if (norm3(axis) - 1 >= 0.001)
+		printf("\nkernel2: angle_to_quaternion() norm3 = %g (%g, %g, %g) ERROR!", norm3(axis), axis[0], axis[1], axis[2]); // Replace assert(eq(axis.norm(), 1));
+	// else
+	//     printf("\nkernel2: angle_to_quaternion() norm3 = %g (%g, %g, %g) OK!", norm3(axis), axis[0], axis[1], axis[2]); // Replace assert(eq(axis.norm(), 1));
 	normalize_angle(&angle);
 	float c = cos(angle / 2);
 	float s = sin(angle / 2);
@@ -350,8 +353,14 @@ void set(	const				output_type_cl* x,
 			const				float			epsilon_fl
 ) {
 	//************** (root) node.set_conf **************// (CHECKED)
-	for (int i = 0; i < 3; i++) lig_rigid_gpu->origin[0][i] = x->position[i]; // set origin
-	for (int i = 0; i < 4; i++) lig_rigid_gpu->orientation_q[0][i] = x->orientation[i]; // set orientation_q
+	for (int i = 0; i < 3; i++) {
+		//printf("\nx->position[i] = %g", x->position[i]);
+		lig_rigid_gpu->origin[0][i] = x->position[i]; // set origin
+	} 
+	for (int i = 0; i < 4; i++) {
+		//printf("\nx->orientation[i] = %g", x->orientation[i]);
+		lig_rigid_gpu->orientation_q[0][i] = x->orientation[i]; // set orientation_q
+	}
 	quaternion_to_r3(lig_rigid_gpu->orientation_q[0], lig_rigid_gpu->orientation_m[0]);// set orientation_m
 	// set coords
 	int begin = lig_rigid_gpu->atom_range[0][0];
@@ -360,6 +369,8 @@ void set(	const				output_type_cl* x,
 		local_to_lab(m_coords_gpu->coords[i], lig_rigid_gpu->origin[0], &atoms[i].coords[0], lig_rigid_gpu->orientation_m[0]);
 	}
 	//************** end node.set_conf **************//
+
+	//printRigidCoords(334, lig_rigid_gpu);
 
 	//************** branches_set_conf **************//
 	//update nodes in depth-first order
@@ -383,6 +394,8 @@ void set(	const				output_type_cl* x,
 		float current_axis[3] = {	lig_rigid_gpu->axis[current][0],
 									lig_rigid_gpu->axis[current][1],
 									lig_rigid_gpu->axis[current][2] };
+
+		//printRigidCoords(335, lig_rigid_gpu);
 
 		angle_to_quaternion2(tmp, current_axis, torsion);
 		angle_to_quaternion_multi(tmp, parent_q);

@@ -1,11 +1,11 @@
 //#include "kernel2.h"
-//void print_output(output_type_cl* a) {
-//	for (int i = 0; i < 3 + 4 + MAX_NUM_OF_LIG_TORSION;i++) {
-//		if (i < 3)printf("position[%d] = %f\n", i, a->position[i]);
-//		else if (i < 7)printf("orientation[%d] = %f\n", i - 3, a->orientation[i - 3]);
-//		else if (i < 3 + 4 + MAX_NUM_OF_LIG_TORSION)printf("lig_torsion[%d] = %f\n", i - 7, a->lig_torsion[i - 7]);
-//	}
-//}
+// void print_output(output_type_cl* a) {
+// 	for (int i = 0; i < 3 + 4 + MAX_NUM_OF_LIG_TORSION;i++) {
+// 		if (i < 3)printf("position[%d] = %f\n", i, a->position[i]);
+// 		else if (i < 7)printf("orientation[%d] = %f\n", i - 3, a->orientation[i - 3]);
+// 		else if (i < 3 + 4 + MAX_NUM_OF_LIG_TORSION)printf("lig_torsion[%d] = %f\n", i - 7, a->lig_torsion[i - 7]);
+// 	}
+// }
 //
 //void print_change(change_cl* a) {
 //	for (int i = 0; i < 3 + 3 + MAX_NUM_OF_LIG_TORSION; i++) {
@@ -15,11 +15,83 @@
 //	}
 //}
 
+// typedef struct {
+// 	atom_cl atoms[MAX_NUM_OF_ATOMS];
+// 	m_coords_cl m_coords;
+// 	m_minus_forces minus_forces;
+// 	ligand_cl ligand;
+// 	int m_num_movable_atoms;
+// } m_cl;
+
+// typedef struct {
+// 	lig_pairs_cl pairs;
+// 	rigid_cl rigid;
+// 	int begin;
+// 	int end;
+// } ligand_cl;
+
+// typedef struct {
+// 	int type_pair_index	[MAX_NUM_OF_LIG_PAIRS];
+// 	int a				[MAX_NUM_OF_LIG_PAIRS];
+// 	int b				[MAX_NUM_OF_LIG_PAIRS];
+// 	int num_pairs;
+// } lig_pairs_cl;
+
+// typedef struct { // depth-first order
+// 	int		atom_range		[MAX_NUM_OF_RIGID][2];
+// 	float	origin			[MAX_NUM_OF_RIGID][3];
+// 	float	orientation_m	[MAX_NUM_OF_RIGID][9]; // This matrix is fixed to 3*3
+// 	float	orientation_q	[MAX_NUM_OF_RIGID][4];
+	
+// 	float	axis			[MAX_NUM_OF_RIGID][3]; // 1st column is root node, all 0s
+// 	float	relative_axis	[MAX_NUM_OF_RIGID][3]; // 1st column is root node, all 0s
+// 	float	relative_origin	[MAX_NUM_OF_RIGID][3]; // 1st column is root node, all 0s
+	
+// 	int		parent			[MAX_NUM_OF_RIGID]; // every node has only 1 parent node
+// 	bool	children_map	[MAX_NUM_OF_RIGID][MAX_NUM_OF_RIGID]; // chidren_map[i][j] = true if node i's child is node j
+// 	int		num_children;
+	
+// } rigid_cl;
+
+
+// void printRigidCoords(int pos, const rigid_cl *rigid) {
+// 	printf("\n rigid = %x", rigid);
+// 	for (int current = 1; current < rigid->num_children + 1; current++) {
+// 		float *coords = rigid->axis[current];
+// 		printf("\n %d %d coords = %g %g %g", pos, current, coords[0], coords[1], coords[2]);
+// 		coords = rigid->relative_axis[current];
+// 		printf("\n %d %d relative coords = %g %g %g", pos, current, coords[0], coords[1], coords[2]);
+// 		int parent = rigid->parent[current];
+// 		printf("\n %d %d parent = %d", pos, current, parent);
+// 		float *orient = rigid->orientation_m[parent];
+// 		printf("\n %d %d orientation = %g %g %g %g %g %g %g %g %g", pos, current,
+// 		 orient[0], orient[1], orient[2], orient[3], orient[4], orient[5], orient[6], orient[7], orient[8]);
+// 		float *origin = rigid->origin[current];
+// 		printf("\n %d %d origin_curr = %g %g %g", pos, current, origin[0], origin[1], origin[2]);
+// 		origin = rigid->origin[parent];
+// 		printf("\n %d %d origin_parent = %g %g %g", pos, current, origin[0], origin[1], origin[2]);
+// 		origin = rigid->relative_origin[current];
+// 		printf("\n %d %d relative_origin = %g %g %g", pos, current, origin[0], origin[1], origin[2]);		
+// 	}
+// }
+
 void m_cl_init_with_m_cl(const __global m_cl* m_cl_old, m_cl* m_cl_new) {
 	for (int i = 0; i < MAX_NUM_OF_ATOMS; i++)m_cl_new->atoms[i] = m_cl_old->atoms[i];
 	m_cl_new->m_coords = m_cl_old->m_coords;
 	m_cl_new->minus_forces = m_cl_old->minus_forces;
-	m_cl_new->ligand = m_cl_old->ligand;
+	
+	//m_cl_new->ligand = m_cl_old->ligand;
+	m_cl_new->ligand.begin = m_cl_old->ligand.begin;
+	m_cl_new->ligand.end = m_cl_old->ligand.end;
+	m_cl_new->ligand.rigid = m_cl_old->ligand.rigid;
+
+	m_cl_new->ligand.pairs.num_pairs = m_cl_old->ligand.pairs.num_pairs;
+	for(int i = 0; i < m_cl_new->ligand.pairs.num_pairs; i++) {
+		m_cl_new->ligand.pairs.type_pair_index[i] = m_cl_old->ligand.pairs.type_pair_index[i];
+		m_cl_new->ligand.pairs.a[i] = m_cl_old->ligand.pairs.a[i];
+		m_cl_new->ligand.pairs.b[i] = m_cl_old->ligand.pairs.b[i];
+	}
+	
 	m_cl_new->m_num_movable_atoms = m_cl_old->m_num_movable_atoms;
 }
 
@@ -96,7 +168,7 @@ void write_back(__global output_type_cl* results, const output_type_cl* best_out
 }
 
 __kernel
-void kernel2(	__global	m_cl*			m_cl_global,
+void kernel2(  	__global	m_cl*			m_cl_global,
 				__constant	ig_cl*			ig_cl_gpu,
 				__constant	p_cl*			p_cl_gpu,
 				__constant	float*			rand_molec_struc_vec_gpu,
@@ -111,7 +183,8 @@ void kernel2(	__global	m_cl*			m_cl_global,
 				__global	output_type_cl	results[],
 							int				search_depth,
 							int				e,
-							int				total_wi
+							int				total_wi,
+							int             offset
 )
 {
 	int gx = get_global_id(0);
@@ -119,7 +192,7 @@ void kernel2(	__global	m_cl*			m_cl_global,
 	int gs = get_global_size(0);
 
 	//int gl = get_global_linear_id();
-	int gl = get_global_id(1) * get_global_size(0) + get_global_id(0);
+	int gl = get_global_id(1) * get_global_size(0) + get_global_id(0) + offset;
 	
 	float best_e = INFINITY;
 
@@ -133,17 +206,25 @@ void kernel2(	__global	m_cl*			m_cl_global,
 		m_cl m_cl_gpu;
 		m_cl_init_with_m_cl(m_cl_global, &m_cl_gpu);
 
+		//printRigidCoords(0, &m_cl_gpu.ligand.rigid);
+
+		//printf("\n rand_molec_struc_vec_gpu[0] = %g", rand_molec_struc_vec_gpu[0]);
 
 		output_type_cl tmp; // private memory, shared only in work item
 		change_cl g;
 		output_type_cl_init(&tmp, rand_molec_struc_vec_gpu + gll * (SIZE_OF_MOLEC_STRUC / sizeof(float)));
 		g.lig_torsion_size = tmp.lig_torsion_size;
+
+		//printf("\n tmp.position[0] = %g", tmp.position[0]);
+
 		// BFGS
 		output_type_cl best_out;
 		output_type_cl candidate;
 			
 		for (int step = 0; step < search_depth; step++) {
 			output_type_cl_init_with_output(&candidate, &tmp);
+
+			//printf("\n candidate.position[0] = %g", candidate.position[0]);
 
 			int map_index = (step + gll * search_depth) % MAX_NUM_OF_RANDOM_MAP;
 			mutate_conf_cl(	map_index,
@@ -160,6 +241,10 @@ void kernel2(	__global	m_cl*			m_cl_global,
 							epsilon_fl,
 							mutation_amplitude
 			);
+
+			//printf("\n candidate.position[0] = %g", candidate.position[0]);
+
+			//printRigidCoords(1 + step, &m_cl_gpu.ligand.rigid);
 			
 			bfgs(	&candidate,
 					&g,
@@ -170,6 +255,8 @@ void kernel2(	__global	m_cl*			m_cl_global,
 					epsilon_fl,
 					bfgs_max_steps
 			);
+
+			//printRigidCoords(100 + step, &m_cl_gpu.ligand.rigid);
 			
 			float n = generate_n(rand_maps_gpu->pi_map, map_index);
 			

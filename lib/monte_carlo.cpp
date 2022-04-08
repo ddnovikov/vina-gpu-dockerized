@@ -251,7 +251,7 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 	std::thread console_thread(print_process);
 	
 
-	program_cl = SetupBuildProgramWithBinary(context, devices, "Kernel2_Opt.bin");
+	//program_cl = SetupBuildProgramWithBinary(context, devices, "Kernel2_Opt.bin");
 
 	err = clUnloadPlatformCompiler(platforms[gpu_platform_id]); checkErr(err);
 	//Set kernel arguments
@@ -524,6 +524,7 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 									flex_tor.size() * sizeof(float), flex_tor.data(), 0, NULL, NULL); checkErr(err);
 		err = clEnqueueWriteBuffer(queue, rand_molec_struc_vec_gpu, false, i * SIZE_OF_MOLEC_STRUC + (pos.size() + ori.size() + MAX_NUM_OF_LIG_TORSION + MAX_NUM_OF_FLEX_TORSION) * sizeof(float),
 			sizeof(float), &lig_tor_size, 0, NULL, NULL); checkErr(err);
+		err = clFinish(queue); checkErr(err);
 	}
 
 	cl_mem best_e_gpu;
@@ -561,35 +562,41 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 	cl_mem results;
 	CreateDeviceBuffer(&results, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, thread * sizeof(output_type_cl), context);
 	
-	clFinish(queue);
+	err = clFinish(queue); checkErr(err);
 
-	/**************************************************************************/
-	/************************   Set kernel arguments    ***********************/
-	/**************************************************************************/
-	SetKernelArg(kernels[0], 0, sizeof(cl_mem),		&m_cl_gpu);
-	SetKernelArg(kernels[0], 1, sizeof(cl_mem),		&ig_cl_gpu);
-	SetKernelArg(kernels[0], 2, sizeof(cl_mem),		&p_cl_gpu);
-	SetKernelArg(kernels[0], 3,	sizeof(cl_mem),		&rand_molec_struc_vec_gpu);
-	SetKernelArg(kernels[0], 4, sizeof(cl_mem),		&best_e_gpu);
-	SetKernelArg(kernels[0], 5, sizeof(int),		&quasi_newton_par_max_steps);
-	SetKernelArg(kernels[0], 6, sizeof(unsigned int),	&num_steps);
-	SetKernelArg(kernels[0], 7, sizeof(float),		&mutation_amplitude_float);
-	SetKernelArg(kernels[0], 8, sizeof(cl_mem),		&rand_maps_gpu); 
-	SetKernelArg(kernels[0], 9, sizeof(float),		&epsilon_fl_float);
-	SetKernelArg(kernels[0], 10, sizeof(cl_mem),	&hunt_cap_gpu);
-	SetKernelArg(kernels[0], 11, sizeof(cl_mem),	&authentic_v_gpu);
-	SetKernelArg(kernels[0], 12, sizeof(cl_mem),	&results);
-	SetKernelArg(kernels[0], 13, sizeof(int),		&search_depth);
-	SetKernelArg(kernels[0], 14, sizeof(int),		&thread); 
-	SetKernelArg(kernels[0], 15, sizeof(int),	&total_wi);
-	/**************************************************************************/
-	/****************************   Start kernel    ***************************/
-	/**************************************************************************/
-	size_t global_size[2] = {512, 32 };
-	size_t local_size[2] = { 16,2 };
-	cl_event monte_clarlo_cl;
-	err = clEnqueueNDRangeKernel(queue, kernels[0], 2, 0, global_size, local_size, 0, NULL, &monte_clarlo_cl); checkErr(err);
+    cl_event monte_clarlo_cl;
+    
+	for (int i = 0; i < 512 / 32; i++) {
+		int offset = 32*32*32*i;
+		/**************************************************************************/
+		/************************   Set kernel arguments    ***********************/
+		/**************************************************************************/
+		SetKernelArg(kernels[0], 0, sizeof(cl_mem),		&m_cl_gpu);
+		SetKernelArg(kernels[0], 1, sizeof(cl_mem),		&ig_cl_gpu);
+		SetKernelArg(kernels[0], 2, sizeof(cl_mem),		&p_cl_gpu);
+		SetKernelArg(kernels[0], 3,	sizeof(cl_mem),		&rand_molec_struc_vec_gpu);
+		SetKernelArg(kernels[0], 4, sizeof(cl_mem),		&best_e_gpu);
+		SetKernelArg(kernels[0], 5, sizeof(int),		&quasi_newton_par_max_steps);
+		SetKernelArg(kernels[0], 6, sizeof(unsigned int),	&num_steps);
+		SetKernelArg(kernels[0], 7, sizeof(float),		&mutation_amplitude_float);
+		SetKernelArg(kernels[0], 8, sizeof(cl_mem),		&rand_maps_gpu); 
+		SetKernelArg(kernels[0], 9, sizeof(float),		&epsilon_fl_float);
+		SetKernelArg(kernels[0], 10, sizeof(cl_mem),	&hunt_cap_gpu);
+		SetKernelArg(kernels[0], 11, sizeof(cl_mem),	&authentic_v_gpu);
+		SetKernelArg(kernels[0], 12, sizeof(cl_mem),	&results);
+		SetKernelArg(kernels[0], 13, sizeof(int),		&search_depth);
+		SetKernelArg(kernels[0], 14, sizeof(int),		&thread); 
+		SetKernelArg(kernels[0], 15, sizeof(int),	&total_wi);
+		SetKernelArg(kernels[0], 16, sizeof(int),	&offset);
+		/**************************************************************************/
+		/****************************   Start kernel    ***************************/
+		/**************************************************************************/
+		//size_t global_size[2] = {512, 32 };
+		size_t global_size[2] = {32, 32 };
+		size_t local_size[2] = { 16,2 };
+		err = clEnqueueNDRangeKernel(queue, kernels[0], 2, 0, global_size, local_size, 0, NULL, &monte_clarlo_cl); checkErr(err);
 
+	}
 	clWaitForEvents(1, &monte_clarlo_cl);
 
 	finished = true;
