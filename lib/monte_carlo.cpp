@@ -250,8 +250,7 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 	printf("\nSearch depth is set to %d",search_depth);
 	std::thread console_thread(print_process);
 	
-
-	//program_cl = SetupBuildProgramWithBinary(context, devices, "Kernel2_Opt.bin");
+	program_cl = SetupBuildProgramWithBinary(context, devices, "Kernel2_Opt.bin");
 
 	err = clUnloadPlatformCompiler(platforms[gpu_platform_id]); checkErr(err);
 	//Set kernel arguments

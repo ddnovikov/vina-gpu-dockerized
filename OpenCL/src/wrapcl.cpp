@@ -406,7 +406,7 @@ void SaveProgramToBinary(cl_program program_cl,const char* file_name) {
         programBinaries[i] = (unsigned char*)malloc(sizeof(unsigned char) * programBinarySize[i]);
     }
     err = clGetProgramInfo(program_cl, CL_PROGRAM_BINARIES, sizeof(unsigned char*) * numDevices, programBinaries, NULL); checkErr(err);
-    FILE* fp = fopen(file_name, "w");
+    FILE* fp = fopen(file_name, "wb");
     for (int i = 0; i < numDevices; i++) {
         fwrite(programBinaries[i], 1, programBinarySize[i], fp);
     }
@@ -417,7 +417,7 @@ void SaveProgramToBinary(cl_program program_cl,const char* file_name) {
 cl_program SetupBuildProgramWithBinary(cl_context context, cl_device_id* devices, const char* binary_file_name) {
     cl_int err;
     cl_int binary_status;
-    FILE* program_handle = fopen(binary_file_name, "r");
+    FILE* program_handle = fopen(binary_file_name, "rb");
     fseek(program_handle, 0, SEEK_END);
     size_t program_size = ftell(program_handle);
     rewind(program_handle);
