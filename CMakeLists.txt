@@ -33,6 +33,14 @@ if (BUILD_KERNEL_FROM_SOURCE)
     add_compile_definitions(BUILD_KERNEL_FROM_SOURCE)
 endif()
 
-add_compile_definitions(CL_TARGET_OPENCL_VERSION=120)
-add_compile_definitions(AMD_PLATFORM)
-add_compile_definitions(OPENCL_1_2)
+SET(GPU_PLATFORM AMD_PLATFORM CACHE STRING "GPU platform")
+add_compile_definitions(${GPU_PLATFORM})
+
+SET(OPENCL_VERSION OPENCL_2_0 CACHE STRING "OpenCL version")
+add_compile_definitions(${OPENCL_VERSION})
+
+if ("${OPENCL_VERSION}" STREQUAL "OPENCL_2_0")
+  add_compile_definitions(CL_TARGET_OPENCL_VERSION=200)
+elseif("${OPENCL_VERSION}" STREQUAL "OPENCL_1_2")
+  add_compile_definitions(CL_TARGET_OPENCL_VERSION=120)
+endif()
