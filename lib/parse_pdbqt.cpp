@@ -98,15 +98,33 @@ T checked_convert_substring(const std::string& str, sz i, sz j, const std::strin
 	}
 }
 
+static void parse_pdbqt_atom_string_main(const std::string& str, int base, vec& coords, fl &charge, std::string &name)
+{
+	coords.data[0] = checked_convert_substring<fl>(str, base     , base +  7, "coordinate");
+	coords.data[1] = checked_convert_substring<fl>(str, base +  8, base + 15, "coordinate");
+	coords.data[2] = checked_convert_substring<fl>(str, base + 16, base + 23, "coordinate");
+
+	charge = 0.0f;
+	if(!substring_is_blank(str, base + 38, base + 45))
+		charge = checked_convert_substring<fl>(str, base + 38, base + 45, "charge");
+
+	name = omit_whitespace(str, base + 47, base + 48);
+}
+
 parsed_atom parse_pdbqt_atom_string(const std::string& str) {
 	unsigned number = checked_convert_substring<unsigned>(str, 7, 11, "atom number");
-	vec coords(checked_convert_substring<fl>(str, 31, 38, "coordinate"),
-			   checked_convert_substring<fl>(str, 39, 46, "coordinate"),
-			   checked_convert_substring<fl>(str, 47, 54, "coordinate"));
-	fl charge = 0;
-	if(!substring_is_blank(str, 69, 76))
-		charge = checked_convert_substring<fl>(str, 69, 76, "charge");
-	std::string name = omit_whitespace(str, 78, 79);
+
+	vec coords;
+	fl charge;
+	std::string name;
+
+	try {
+		parse_pdbqt_atom_string_main(str, 31, coords, charge, name);
+	}
+	catch(const atom_syntax_error &ex) {
+		parse_pdbqt_atom_string_main(str, 32, coords, charge, name);
+	}
+
 	sz ad = string_to_ad_type(name);
 	parsed_atom tmp(ad, charge, coords, number);
 	if(is_non_ad_metal_name(name))
