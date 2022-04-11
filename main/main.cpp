@@ -284,7 +284,8 @@ void main_procedure(model& m, const boost::optional<model>& ref, // m is non-con
 	bool score_only, bool local_only, bool randomize_only, bool no_cache,
 	const grid_dims& gd, int exhaustiveness,
 	const flv& weights,
-	int cpu, int seed, int verbosity, sz num_modes, fl energy_range, tee& log, int search_depth, int thread) {
+	int cpu, int seed, int verbosity, sz num_modes, fl energy_range, tee& log, int search_depth, int thread,
+	int thread_per_call) {
 
 	doing(verbosity, "Setting up the scoring function", log);
 
@@ -319,6 +320,7 @@ void main_procedure(model& m, const boost::optional<model>& ref, // m is non-con
 	}
 	//std::cout << "Search depth is set to " << par.mc.search_depth << std::endl;
 	par.mc.thread = thread;// 20210811 Glinttsd
+	par.mc.thread_per_call = thread_per_call;
 
 	par.mc.ssd_par.evals = unsigned((25 + m.num_movable_atoms()) / 3);
 	par.mc.min_rmsd = 1.0;
@@ -471,6 +473,7 @@ Thank you!\n";
 		fl energy_range = 2.0;
 		int search_depth = 0; // 20210811 Glinttsd
 		int thread = 0;
+		int thread_per_call = 0;
 
 		// -0.035579, -0.005156, 0.840245, -0.035069, -0.587439, 0.05846
 		fl weight_gauss1 = -0.035579;
@@ -508,6 +511,7 @@ Thank you!\n";
 		options_description advanced("Advanced options (see the manual)");
 		advanced.add_options()
 			("thread", value<int>(&thread)->default_value(1000), "the number of computing lanes in Vina-GPU") // 20210811 Glinttsd
+			("thread_per_call", value<int>(&thread_per_call)->default_value(1000), "the number of computing lanes per kernel call")
 			("search_depth", value<int>(&search_depth)->default_value(0), "the number of search depth in monte carlo") // 20210811 Glinttsd
 			//("score_only", bool_switch(&score_only), "score only - search space can be omitted")
 			//("local_only", bool_switch(&local_only), "do local search only")
@@ -696,7 +700,7 @@ Thank you!\n";
 			score_only, local_only, randomize_only, false, // no_cache == false
 			gd, exhaustiveness,
 			weights,
-			cpu, seed, verbosity, max_modes_sz, energy_range, log, search_depth, thread);
+			cpu, seed, verbosity, max_modes_sz, energy_range, log, search_depth, thread, thread_per_call);
 	}
 	catch (file_error& e) {
 		std::cerr << "\n\nError: could not open \"" << e.name.string() << "\" for " << (e.in ? "reading" : "writing") << ".\n";

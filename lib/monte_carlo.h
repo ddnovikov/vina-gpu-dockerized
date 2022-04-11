@@ -27,32 +27,32 @@
 #include "incrementable.h"
 #include "commonMacros.h"
 /*
-* ½á¹¹Ìåmonte_carlo
-* ³ÉÔ±£º1.unsignedÀàĞÍnum_steps
-*		2.doubleÀàĞÍtemperature
-*		3.vecÊ¸Á¿hunt_cap
-*		4.doubleÀàĞÍmin_rmsd
-*		5.unsignedÀàĞÍnum_saved_mins
-*		6.doubleÀàĞÍmutation_amplitude
-*		7.ssdÀà¶ÔÏóssd_par
-*		8.¹¹Ôìº¯Êı£º³õÊ¼»¯num_steps=2500£¬temperature=1.2£¬hunt_cap=[10, 1.5, 10], min_rmsd=0.5, num_saved_mins=50, mutation_amplitude=2
-*       9.ÉùÃ÷¶¨Òåµ÷ÓÃ²Ù×÷·û£¨£©£¬Îª³£Á¿º¯Êı
-*					input:modelÀàÒıÓÃ,precalculateÀà³£Á¿ÒıÓÃ,igridÀà³£Á¿ÒıÓÃ,precalculateÀà³£Á¿ÒıÓÃ,igridÀà³£Á¿ÒıÓÃ,vecÊ¸Á¿³£Á¿ÒıÓÃ,vecÊ¸Á¿³£Á¿ÒıÓÃ,incrementableÀàÖ¸Õë,generatorÀàÒıÓÃ
-*					output:output_typeÀà
-*		9.ÉùÃ÷many_runsº¯Êı£¬Îª³£Á¿º¯Êı
-* 					input:modelÀàÒıÓÃ,precalculateÀà³£Á¿ÒıÓÃ,igridÀà³£Á¿ÒıÓÃ,vecÊ¸Á¿³£Á¿ÒıÓÃ,vecÊ¸Á¿³£Á¿ÒıÓÃ,unsigned intÀàĞÍÊı,generatorÀàÒıÓÃ
-* 					output:output_typeÀà
-*		10.ÉùÃ÷single_runº¯Êı£¬Îª³£Á¿º¯Êı
-* 					input:modelÀàÒıÓÃ,output_typeÀà£¬precalculateÀà³£Á¿ÒıÓÃ,igridÀà³£Á¿ÒıÓÃ,generatorÀàÒıÓÃ
-* 					output:ÎŞ
-*		11.ÖØÔØÉùÃ÷¶¨Òåµ÷ÓÃ²Ù×÷·û£¨£©£¬Îª³£Á¿º¯Êı
-* 					input:modelÀàÒıÓÃ,output_containerÀàÒıÓÃ£¬precalculateÀà³£Á¿ÒıÓÃ,igridÀà³£Á¿ÒıÓÃ,precalculateÀà³£Á¿ÒıÓÃ,igridÀà³£Á¿ÒıÓÃ,vecÊ¸Á¿³£Á¿ÒıÓÃ,vecÊ¸Á¿³£Á¿ÒıÓÃ,incrementableÀàÖ¸Õë,generatorÀàÒıÓÃ
-* 					output:ÎŞ
-*					Ïà±ÈÔ­°æ±¾ÊäÈë¶àÁËoutput_containerÀàÒıÓÃ£¬ÎŞ·µ»ØÖµ
-* 		9.ÉùÃ÷many_runsº¯Êı£¬Îª³£Á¿º¯Êı
-* 					input:modelÀàÒıÓÃ,output_containerÀàÒıÓÃ£¬precalculateÀà³£Á¿ÒıÓÃ,igridÀà³£Á¿ÒıÓÃ,vecÊ¸Á¿³£Á¿ÒıÓÃ,vecÊ¸Á¿³£Á¿ÒıÓÃ,unsigned intÀàĞÍÊı,generatorÀàÒıÓÃ
-* 					output:ÎŞ
-*					Ïà±ÈÔ­°æ±¾ÊäÈë¶àÁËoutput_containerÀàÒıÓÃ£¬ÎŞ·µ»ØÖµ
+* ï¿½á¹¹ï¿½ï¿½monte_carlo
+* ï¿½ï¿½Ô±ï¿½ï¿½1.unsignedï¿½ï¿½ï¿½ï¿½num_steps
+*		2.doubleï¿½ï¿½ï¿½ï¿½temperature
+*		3.vecÊ¸ï¿½ï¿½hunt_cap
+*		4.doubleï¿½ï¿½ï¿½ï¿½min_rmsd
+*		5.unsignedï¿½ï¿½ï¿½ï¿½num_saved_mins
+*		6.doubleï¿½ï¿½ï¿½ï¿½mutation_amplitude
+*		7.ssdï¿½ï¿½ï¿½ï¿½ï¿½ssd_par
+*		8.ï¿½ï¿½ï¿½ìº¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½num_steps=2500ï¿½ï¿½temperature=1.2ï¿½ï¿½hunt_cap=[10, 1.5, 10], min_rmsd=0.5, num_saved_mins=50, mutation_amplitude=2
+*       9.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*					input:modelï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,precalculateï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,igridï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,precalculateï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,igridï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,vecÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,vecÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,incrementableï¿½ï¿½Ö¸ï¿½ï¿½,generatorï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+*					output:output_typeï¿½ï¿½
+*		9.ï¿½ï¿½ï¿½ï¿½many_runsï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 					input:modelï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,precalculateï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,igridï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,vecÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,vecÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,unsigned intï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,generatorï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 					output:output_typeï¿½ï¿½
+*		10.ï¿½ï¿½ï¿½ï¿½single_runï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 					input:modelï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,output_typeï¿½à£¬precalculateï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,igridï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,generatorï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 					output:ï¿½ï¿½
+*		11.ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 					input:modelï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,output_containerï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½precalculateï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,igridï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,precalculateï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,igridï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,vecÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,vecÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,incrementableï¿½ï¿½Ö¸ï¿½ï¿½,generatorï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 					output:ï¿½ï¿½
+*					ï¿½ï¿½ï¿½Ô­ï¿½æ±¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½output_containerï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½Ş·ï¿½ï¿½ï¿½Öµ
+* 		9.ï¿½ï¿½ï¿½ï¿½many_runsï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 					input:modelï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,output_containerï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½precalculateï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,igridï¿½à³£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,vecÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,vecÊ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,unsigned intï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,generatorï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+* 					output:ï¿½ï¿½
+*					ï¿½ï¿½ï¿½Ô­ï¿½æ±¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½output_containerï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½Ş·ï¿½ï¿½ï¿½Öµ
 */
 struct monte_carlo {
 	unsigned num_steps;
@@ -65,6 +65,7 @@ struct monte_carlo {
 
 	int thread; //parallelism 20210917 Glinttsd
 	int search_depth; // 20210813 Glinttsd
+	int thread_per_call;
 
 
 

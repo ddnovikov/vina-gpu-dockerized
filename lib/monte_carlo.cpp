@@ -564,9 +564,11 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 	err = clFinish(queue); checkErr(err);
 
     cl_event monte_clarlo_cl;
-    
-	for (int i = 0; i < 512 / 32; i++) {
-		int offset = 32*32*32*i;
+
+	size_t local_size = 32;
+	size_t global_size = thread_per_call;
+
+	for (int offset = 0; offset < thread; offset += global_size) {
 		/**************************************************************************/
 		/************************   Set kernel arguments    ***********************/
 		/**************************************************************************/
@@ -590,11 +592,7 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 		/**************************************************************************/
 		/****************************   Start kernel    ***************************/
 		/**************************************************************************/
-		//size_t global_size[2] = {512, 32 };
-		size_t global_size[2] = {32, 32 };
-		size_t local_size[2] = { 16,2 };
-		err = clEnqueueNDRangeKernel(queue, kernels[0], 2, 0, global_size, local_size, 0, NULL, &monte_clarlo_cl); checkErr(err);
-
+		err = clEnqueueNDRangeKernel(queue, kernels[0], 1, 0, &global_size, &local_size, 0, NULL, &monte_clarlo_cl); checkErr(err);
 	}
 	clWaitForEvents(1, &monte_clarlo_cl);
 

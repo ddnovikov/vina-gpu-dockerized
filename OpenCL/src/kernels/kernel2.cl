@@ -187,115 +187,102 @@ void kernel2(  	__global	m_cl*			m_cl_global,
 							int             offset
 )
 {
-	int gx = get_global_id(0);
-	int gy = get_global_id(1);
-	int gs = get_global_size(0);
+	int gl = get_global_id(0) + offset;
+	if (gl >= e) return;
 
-	//int gl = get_global_linear_id();
-	int gl = get_global_id(1) * get_global_size(0) + get_global_id(0) + offset;
+	//printf("\n gl = %d", gl);
 	
 	float best_e = INFINITY;
 
-	for (int gll = gl;
-			 gll < e;
-			 gll += total_wi
-		)
-	{
-		//if (gll % 100 == 0)printf("\nThread %d START", gll);
+	m_cl m_cl_gpu;
+	m_cl_init_with_m_cl(m_cl_global, &m_cl_gpu);
 
-		m_cl m_cl_gpu;
-		m_cl_init_with_m_cl(m_cl_global, &m_cl_gpu);
+	//printRigidCoords(0, &m_cl_gpu.ligand.rigid);
 
-		//printRigidCoords(0, &m_cl_gpu.ligand.rigid);
+	//printf("\n rand_molec_struc_vec_gpu[0] = %g", rand_molec_struc_vec_gpu[0]);
 
-		//printf("\n rand_molec_struc_vec_gpu[0] = %g", rand_molec_struc_vec_gpu[0]);
+	output_type_cl tmp; // private memory, shared only in work item
+	change_cl g;
+	output_type_cl_init(&tmp, rand_molec_struc_vec_gpu + gl * (SIZE_OF_MOLEC_STRUC / sizeof(float)));
+	g.lig_torsion_size = tmp.lig_torsion_size;
 
-		output_type_cl tmp; // private memory, shared only in work item
-		change_cl g;
-		output_type_cl_init(&tmp, rand_molec_struc_vec_gpu + gll * (SIZE_OF_MOLEC_STRUC / sizeof(float)));
-		g.lig_torsion_size = tmp.lig_torsion_size;
+	//printf("\n tmp.position[0] = %g", tmp.position[0]);
 
-		//printf("\n tmp.position[0] = %g", tmp.position[0]);
+	// BFGS
+	output_type_cl best_out;
+	output_type_cl candidate;
+		
+	for (int step = 0; step < search_depth; step++) {
+		output_type_cl_init_with_output(&candidate, &tmp);
 
-		// BFGS
-		output_type_cl best_out;
-		output_type_cl candidate;
+		//printf("\n candidate.position[0] = %g", candidate.position[0]);
+
+		int map_index = (step + gl * search_depth) % MAX_NUM_OF_RANDOM_MAP;
+		mutate_conf_cl(	map_index,
+						num_steps,
+						&candidate,
+						rand_maps_gpu->int_map,
+						rand_maps_gpu->sphere_map,
+						rand_maps_gpu->pi_map,
+						m_cl_gpu.ligand.begin,
+						m_cl_gpu.ligand.end,
+						m_cl_gpu.atoms,
+						&m_cl_gpu.m_coords,
+						m_cl_gpu.ligand.rigid.origin[0],
+						epsilon_fl,
+						mutation_amplitude
+		);
+
+		//printf("\n candidate.position[0] = %g", candidate.position[0]);
+
+		//printRigidCoords(1 + step, &m_cl_gpu.ligand.rigid);
+		
+		bfgs(	&candidate,
+				&g,
+				&m_cl_gpu,
+				p_cl_gpu,
+				ig_cl_gpu,
+				hunt_cap_gpu,
+				epsilon_fl,
+				bfgs_max_steps
+		);
+
+		//printRigidCoords(100 + step, &m_cl_gpu.ligand.rigid);
+		
+		float n = generate_n(rand_maps_gpu->pi_map, map_index);
+		
+		if (step == 0 || metropolis_accept(tmp.e, candidate.e, 1.2, n)) {
+
+			output_type_cl_init_with_output(&tmp, &candidate);
+
+			set(&tmp, &m_cl_gpu.ligand.rigid, &m_cl_gpu.m_coords,
+				m_cl_gpu.atoms, m_cl_gpu.m_num_movable_atoms, epsilon_fl);
 			
-		for (int step = 0; step < search_depth; step++) {
-			output_type_cl_init_with_output(&candidate, &tmp);
-
-			//printf("\n candidate.position[0] = %g", candidate.position[0]);
-
-			int map_index = (step + gll * search_depth) % MAX_NUM_OF_RANDOM_MAP;
-			mutate_conf_cl(	map_index,
-							num_steps,
-							&candidate,
-							rand_maps_gpu->int_map,
-							rand_maps_gpu->sphere_map,
-							rand_maps_gpu->pi_map,
-							m_cl_gpu.ligand.begin,
-							m_cl_gpu.ligand.end,
-							m_cl_gpu.atoms,
-							&m_cl_gpu.m_coords,
-							m_cl_gpu.ligand.rigid.origin[0],
-							epsilon_fl,
-							mutation_amplitude
-			);
-
-			//printf("\n candidate.position[0] = %g", candidate.position[0]);
-
-			//printRigidCoords(1 + step, &m_cl_gpu.ligand.rigid);
-			
-			bfgs(	&candidate,
-					&g,
-					&m_cl_gpu,
-					p_cl_gpu,
-					ig_cl_gpu,
-					hunt_cap_gpu,
-					epsilon_fl,
-					bfgs_max_steps
-			);
-
-			//printRigidCoords(100 + step, &m_cl_gpu.ligand.rigid);
-			
-			float n = generate_n(rand_maps_gpu->pi_map, map_index);
-			
-			if (step == 0 || metropolis_accept(tmp.e, candidate.e, 1.2, n)) {
-
-				output_type_cl_init_with_output(&tmp, &candidate);
-
-				set(&tmp, &m_cl_gpu.ligand.rigid, &m_cl_gpu.m_coords,
-					m_cl_gpu.atoms, m_cl_gpu.m_num_movable_atoms, epsilon_fl);
-				
+			if (tmp.e < best_e) {
+				bfgs(	&tmp,
+						&g,
+						&m_cl_gpu,
+						p_cl_gpu,
+						ig_cl_gpu,
+						authentic_v_gpu,
+						epsilon_fl,
+						bfgs_max_steps
+				);
+				// set
 				if (tmp.e < best_e) {
-					bfgs(	&tmp,
-							&g,
-							&m_cl_gpu,
-							p_cl_gpu,
-							ig_cl_gpu,
-							authentic_v_gpu,
-							epsilon_fl,
-							bfgs_max_steps
-					);
-					// set
-					if (tmp.e < best_e) {
-						set(&tmp, &m_cl_gpu.ligand.rigid, &m_cl_gpu.m_coords,
-							m_cl_gpu.atoms, m_cl_gpu.m_num_movable_atoms, epsilon_fl);
+					set(&tmp, &m_cl_gpu.ligand.rigid, &m_cl_gpu.m_coords,
+						m_cl_gpu.atoms, m_cl_gpu.m_num_movable_atoms, epsilon_fl);
 
-						output_type_cl_init_with_output(&best_out, &tmp);
-						get_heavy_atom_movable_coords(&best_out, &m_cl_gpu); // get coords
-						best_e = tmp.e;
-					}
-
+					output_type_cl_init_with_output(&best_out, &tmp);
+					get_heavy_atom_movable_coords(&best_out, &m_cl_gpu); // get coords
+					best_e = tmp.e;
 				}
+
 			}
-			
 		}
-
-		// write the best conformation back to CPU
-		write_back(&results[gll], &best_out);
-
-
-		//if (gll % 100 == 0)printf("\nThread %d FINISH", gll);
+		
 	}
+
+	// write the best conformation back to CPU
+	write_back(&results[gl], &best_out);
 }
