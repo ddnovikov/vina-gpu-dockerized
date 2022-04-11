@@ -27,12 +27,6 @@ set_property(TARGET Vina-GPU PROPERTY
 
 target_link_options(Vina-GPU PUBLIC "/STACK:10000000")
 
-SET(BUILD_KERNEL_FROM_SOURCE false CACHE BOOL "Build kernel from source")
-
-if (BUILD_KERNEL_FROM_SOURCE)
-    add_compile_definitions(BUILD_KERNEL_FROM_SOURCE)
-endif()
-
 SET(GPU_PLATFORM AMD_PLATFORM CACHE STRING "GPU platform")
 add_compile_definitions(${GPU_PLATFORM})
 

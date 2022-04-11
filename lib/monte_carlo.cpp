@@ -31,12 +31,12 @@
 #include <iostream>
 
 #include <fstream>
+#include <boost/filesystem.hpp>
 #include <boost/progress.hpp>
 #include <thread>
 
 //#define DISPLAY_ANALYSIS
 //#define DATA_DISTRIBUTION_TEST
-//#define BUILD_KERNEL_FROM_SOURCE
 output_type monte_carlo::operator()(model& m, const precalculate& p, const igrid& ig, const precalculate& p_widened, const igrid& ig_widened, const vec& corner1, const vec& corner2, incrementable* increment_me, rng& generator) const {
 	output_container tmp;
 	this->operator()(m, tmp, p, ig, p_widened, ig_widened, corner1, corner2, increment_me, generator); // call the version that produces the whole container
@@ -213,44 +213,42 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 	cl_program program;
 	size_t program_size;
 
+	const char *kernelBinary = "Kernel2_Opt.bin";
 
-	
-	//Read kernel source code
-#ifdef BUILD_KERNEL_FROM_SOURCE
-	printf("\nBuild kernels from source"); fflush(stdout);
-	const std::string default_work_path = ".";
-	const std::string include_path = default_work_path + "/OpenCL/inc"; //FIX it
-	const std::string addtion = "";
+	if (!boost::filesystem::exists(kernelBinary)) {
+		printf("\nBuild kernels from source"); fflush(stdout);
+		const std::string default_work_path = ".";
+		const std::string include_path = default_work_path + "/OpenCL/inc"; //FIX it
+		const std::string addtion = "";
 
-	char* program_file_n[NUM_OF_FILES];
-	size_t program_size_n[NUM_OF_FILES];
-	std::string file_paths[NUM_OF_FILES] = {	default_work_path + "/OpenCL/src/kernels/code_head.cpp",
-												default_work_path + "/OpenCL/src/kernels/mutate_conf.cpp",
-												default_work_path + "/OpenCL/src/kernels/matrix.cpp",
-												default_work_path + "/OpenCL/src/kernels/quasi_newton.cpp",
-												default_work_path + "/OpenCL/src/kernels/kernel2.cl"}; // The order of files is important!
+		char* program_file_n[NUM_OF_FILES];
+		size_t program_size_n[NUM_OF_FILES];
+		std::string file_paths[NUM_OF_FILES] = {	default_work_path + "/OpenCL/src/kernels/code_head.cpp",
+													default_work_path + "/OpenCL/src/kernels/mutate_conf.cpp",
+													default_work_path + "/OpenCL/src/kernels/matrix.cpp",
+													default_work_path + "/OpenCL/src/kernels/quasi_newton.cpp",
+													default_work_path + "/OpenCL/src/kernels/kernel2.cl"}; // The order of files is important!
 
-	read_n_file(program_file_n, program_size_n, file_paths, NUM_OF_FILES);
-	std::string final_file;
-	size_t final_size = NUM_OF_FILES - 1; // count '\n'
-	for (int i = 0; i < NUM_OF_FILES; i++) {
-		if (i == 0) final_file = program_file_n[0];
-		else final_file = final_file + '\n' + (std::string)program_file_n[i];
-		final_size += program_size_n[i];
+		read_n_file(program_file_n, program_size_n, file_paths, NUM_OF_FILES);
+		std::string final_file;
+		size_t final_size = NUM_OF_FILES - 1; // count '\n'
+		for (int i = 0; i < NUM_OF_FILES; i++) {
+			if (i == 0) final_file = program_file_n[0];
+			else final_file = final_file + '\n' + (std::string)program_file_n[i];
+			final_size += program_size_n[i];
+		}
+		const char* final_files_char = final_file.data();	
+
+		program_cl = clCreateProgramWithSource(context, 1, (const char**)&final_files_char, &final_size, &err); checkErr(err);
+		SetupBuildProgramWithSource(program_cl, NULL, devices, include_path, addtion);
+		SaveProgramToBinary(program_cl, kernelBinary);
 	}
-	const char* final_files_char = final_file.data();	
-
-	program_cl = clCreateProgramWithSource(context, 1, (const char**)&final_files_char, &final_size, &err); checkErr(err);
-	SetupBuildProgramWithSource(program_cl, NULL, devices, include_path, addtion);
-	SaveProgramToBinary(program_cl, "Kernel2_Opt.bin");
-#endif
-
 	
 	//Display the progress
 	printf("\nSearch depth is set to %d",search_depth);
 	std::thread console_thread(print_process);
 	
-	program_cl = SetupBuildProgramWithBinary(context, devices, "Kernel2_Opt.bin");
+	program_cl = SetupBuildProgramWithBinary(context, devices, kernelBinary);
 
 	err = clUnloadPlatformCompiler(platforms[gpu_platform_id]); checkErr(err);
 	//Set kernel arguments
