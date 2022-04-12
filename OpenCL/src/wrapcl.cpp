@@ -279,7 +279,7 @@ void SetupPlatform(cl_platform_id** platforms, cl_int* gpu_platform) {
 }
 
 
-void SetupDevice(cl_platform_id* platforms, cl_device_id** devices, cl_int gpu_platform) {
+cl_uint SetupDevice(cl_platform_id* platforms, cl_device_id** devices, cl_int gpu_platform) {
     cl_uint num_device;
     cl_int err;
     size_t device_name_size;
@@ -309,6 +309,8 @@ void SetupDevice(cl_platform_id* platforms, cl_device_id** devices, cl_int gpu_p
         printf("\nPlatform %d local memory size:%f KB\n", N, (double)mem_size / 1000);
 #endif
     }
+
+    return num_device;
 }
 
 

@@ -66,6 +66,7 @@ struct monte_carlo {
 	int thread; //parallelism 20210917 Glinttsd
 	int search_depth; // 20210813 Glinttsd
 	int thread_per_call;
+	int device;
 
 
 
