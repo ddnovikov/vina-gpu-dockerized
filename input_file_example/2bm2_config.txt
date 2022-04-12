@@ -8,6 +8,7 @@ size_x = 25
 size_y = 25
 size_z = 25
 thread = 8000
-thread_per_call = 500
+thread_per_call = 512
+device = 0
 
 	
