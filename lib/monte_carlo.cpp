@@ -496,8 +496,8 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 	size_t rand_maps_size = sizeof(*rand_maps);
 
 
-	float hunt_cap_float[3] = {hunt_cap[0], hunt_cap[1], hunt_cap[2]};
-	float authentic_v_float[3] = { authentic_v[0],authentic_v[1], authentic_v[2] };
+	float hunt_cap_float[3] = {static_cast<float>(hunt_cap[0]), static_cast<float>(hunt_cap[1]), static_cast<float>(hunt_cap[2])};
+	float authentic_v_float[3] = { static_cast<float>(authentic_v[0]),static_cast<float>(authentic_v[1]), static_cast<float>(authentic_v[2]) };
 	float mutation_amplitude_float = mutation_amplitude;
 	float epsilon_fl_float = epsilon_fl;
 	int	total_wi = max_wi_size[0] * max_wi_size[1];
@@ -563,12 +563,13 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 	
 	err = clFinish(queue); checkErr(err);
 
-    cl_event monte_clarlo_cl;
-
 	size_t local_size = 32;
 	size_t global_size = thread_per_call;
 
-	for (int offset = 0; offset < thread; offset += global_size) {
+    std::vector<cl_event> monte_clarlo_cl_v((thread + global_size - 1) / global_size);
+
+	for (int i = 0; i < monte_clarlo_cl_v.size(); i++) {
+		int offset = i*global_size;
 		/**************************************************************************/
 		/************************   Set kernel arguments    ***********************/
 		/**************************************************************************/
@@ -592,9 +593,9 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 		/**************************************************************************/
 		/****************************   Start kernel    ***************************/
 		/**************************************************************************/
-		err = clEnqueueNDRangeKernel(queue, kernels[0], 1, 0, &global_size, &local_size, 0, NULL, &monte_clarlo_cl); checkErr(err);
+		err = clEnqueueNDRangeKernel(queue, kernels[0], 1, 0, &global_size, &local_size, 0, NULL, &monte_clarlo_cl_v[i]); checkErr(err);
 	}
-	clWaitForEvents(1, &monte_clarlo_cl);
+	clWaitForEvents(1, &monte_clarlo_cl_v.back());
 
 	finished = true;
 	console_thread.join(); // wait the thread finish
@@ -643,11 +644,14 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 
 
 	// Output Analysis
-	cl_ulong time_start, time_end;
-	double total_time;
-	err = clGetEventProfilingInfo(monte_clarlo_cl, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL); checkErr(err);
-	err = clGetEventProfilingInfo(monte_clarlo_cl, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL); checkErr(err);
-	total_time = time_end - time_start;
+	double total_time = 0.0;
+	
+	for(int i = 0; i < monte_clarlo_cl_v.size(); i++) {
+		cl_ulong time_start, time_end;
+		err = clGetEventProfilingInfo(monte_clarlo_cl_v.at(i), CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL); checkErr(err);
+		err = clGetEventProfilingInfo(monte_clarlo_cl_v.at(i), CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL); checkErr(err);
+		total_time += (time_end - time_start);
+	}
 	printf("GPU monte carlo runtime: %0.3f s", (total_time / 1000000000.0));
 
 #ifdef DISPLAY_ANALYSIS
