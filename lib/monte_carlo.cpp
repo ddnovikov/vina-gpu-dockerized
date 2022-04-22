@@ -619,7 +619,8 @@ void monte_carlo::operator()(model& m, output_container& out, const precalculate
 
 	// Write back to vina
 	for (int i = 0; i < thread; i++) {
-		add_to_output_container(out, result_vina[i], min_rmsd, num_saved_mins);
+		if (result_vina[i].e != INFINITY)
+			add_to_output_container(out, result_vina[i], min_rmsd, num_saved_mins);
 	}
 	VINA_CHECK(!out.empty());
 	VINA_CHECK(out.front().e <= out.back().e);

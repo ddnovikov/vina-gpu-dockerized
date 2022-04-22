@@ -189,10 +189,11 @@ void kernel2(  	__global	m_cl*			m_cl_global,
 {
 	int gl = get_global_id(0) + offset;
 	if (gl >= e) return;
-
-	//printf("\n gl = %d", gl);
 	
 	float best_e = INFINITY;
+
+    //if (gl == 80 || gl == 1)
+	//	printf("\n gl = %d, best_e = %g", gl, best_e);
 
 	m_cl m_cl_gpu;
 	m_cl_init_with_m_cl(m_cl_global, &m_cl_gpu);
@@ -210,6 +211,7 @@ void kernel2(  	__global	m_cl*			m_cl_global,
 
 	// BFGS
 	output_type_cl best_out;
+	best_out.e = best_e;
 	output_type_cl candidate;
 		
 	for (int step = 0; step < search_depth; step++) {
@@ -257,6 +259,9 @@ void kernel2(  	__global	m_cl*			m_cl_global,
 
 			set(&tmp, &m_cl_gpu.ligand.rigid, &m_cl_gpu.m_coords,
 				m_cl_gpu.atoms, m_cl_gpu.m_num_movable_atoms, epsilon_fl);
+
+            //if (gl == 80 || gl == 1)
+			//	printf("\n(1) gl = %d, tmp.e = %g", gl, tmp.e);
 			
 			if (tmp.e < best_e) {
 				bfgs(	&tmp,
@@ -268,6 +273,10 @@ void kernel2(  	__global	m_cl*			m_cl_global,
 						epsilon_fl,
 						bfgs_max_steps
 				);
+
+                //if (gl == 80 || gl == 1)
+	    		//	printf("\n(2) gl = %d, tmp.e = %g", gl, tmp.e);
+
 				// set
 				if (tmp.e < best_e) {
 					set(&tmp, &m_cl_gpu.ligand.rigid, &m_cl_gpu.m_coords,
@@ -282,6 +291,9 @@ void kernel2(  	__global	m_cl*			m_cl_global,
 		}
 		
 	}
+
+    //if (gl == 80 || gl == 1)
+	//	printf("\n gl = %d, best_e = %g", gl, best_e);
 
 	// write the best conformation back to CPU
 	write_back(&results[gl], &best_out);
