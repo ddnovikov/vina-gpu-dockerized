@@ -11,5 +11,6 @@ curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.li
 
 sudo apt -y update
 sudo apt -y install docker-ce docker-ce-cli containerd.io 
+sudo usermod -aG docker $USER
 sudo apt -y install nvidia-driver-450-server nvidia-cuda-toolkit nvidia-container-toolkit ocl-icd-libopencl1 clinfo
 sudo reboot
