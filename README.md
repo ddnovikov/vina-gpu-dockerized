@@ -14,3 +14,8 @@ A fork of heterogeneous OpenCL implementation of AutoDock Vina with a Dockerfile
 4. To build Vina-GPU binary only, do `DOCKER_BUILDKIT=1 docker build --target vina-gpu -t vina .`. To build Vina-GPU library with a few convenience libraries -- do `DOCKER_BUILDKIT=1 docker build --target vina-gpu-quantori -t vina .`. Note: this is a very simple one-off container which is not intended to be used with complex toolsets. For this purpose, a more sophisticated image with user management should be created.
 5. To run `docker run --gpus 1 --rm -it vina bash`. 
 6. You can check the correctness of the build by running this test example `./Vina-GPU --config ./input_file_example/2bm2_config.txt`.
+
+# Notes
+
+Image is pretty big and optimizing building time and image size is a good improvement (current image size is about 3.5 GB). Mostly those improvements should be about selecting particular parts of C++ libraries to be built and getting rid of the packages you don't need. Check Dockerfile for additional information. 
+Currently I don't see huge demand in this and no further improvements are planned. If you'd like to request some changes or help, please create an issue or email me: ddnovikov.work@gmail.com.
