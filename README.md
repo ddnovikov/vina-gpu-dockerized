@@ -17,5 +17,5 @@ A fork of heterogeneous OpenCL implementation of AutoDock Vina with a Dockerfile
 
 # Notes
 
-Image is pretty big and optimizing building time and image size is a good improvement (current image size is about 3.5 GB). Mostly those improvements should be about selecting particular parts of C++ libraries to be built and getting rid of the packages you don't need. Check Dockerfile for additional information. 
-Currently I don't see huge demand in this and no further improvements are planned. If you'd like to request some changes or help, please create an issue or email me: ddnovikov.work@gmail.com.
+Image is pretty big and optimizing building time and image size would be a good improvement idea (current image size is about 3.5 GB). Mostly those changes should focus on selecting only particular parts of C++ libraries to be built (instead of full builds which are done now) and getting rid of the packages and software in the image that you don't need. Check Dockerfile for additional information. Refactoring the code also might be beneficial if you plan to use this code more than once.
+Currently I don't see huge demand in these improvements and no further ones are planned. If you'd like to request some changes or help, please create an issue or email me: ddnovikov.work@gmail.com. You might also request some help with the actual code even though the main scope of my work here was about Docker and execution environment in general.
